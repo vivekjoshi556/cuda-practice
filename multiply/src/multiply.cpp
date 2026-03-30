@@ -1,28 +1,42 @@
 #include <thread>
 #include <stdio.h>
 #include "multiply.h"
+#include <iostream>
 
 matrix::matrix(int row, int col) {
     this->rows = row;
     this->cols = col;
-    this->data = new int[row * col](); // parans make sure that all elements are zero.
+    this->data = new float[row * col](); // params make sure that all elements are zero.
 }
 
 matrix::~matrix() {
     delete[] this->data;
 }
 
-void matrix::init() {
+void matrix::init(bool user_input) {
+    for(int i = 0; i < this->rows; i++) {
+        for(int j = 0; j < this->cols; j++) {
+            if (user_input)
+                scanf("%f", &this->data[i * this->cols + j]);
+            else
+                this->data[i * this->cols + j] = rand() % 10;
+                // this->data[i * this->cols + j] = (float)rand() / RAND_MAX;
+
+        }
+    }
+}
+
+void matrix::clear() {
     for(int i = 0; i < this->rows; i++) {
         for(int j = 0; j < this->cols; j++) 
-            scanf("%d", &this->data[i * this->cols + j]);
+            this->data[i * this->cols + j] = 0;
     }
 }
 
 void matrix::show() {
     for(int i = 0; i < this->rows; i++) {
         for(int j = 0; j < this->cols; j++)
-            printf("%d ", this->data[i * this->cols + j]);
+            printf("%f ", this->data[i * this->cols + j]);
         printf("\n");
     }
 }
@@ -37,7 +51,7 @@ bool matrix::matches(matrix *A) {
         for(int j = 0; j < this->cols; j++) {
             int idx = i * this->cols + j;
             if (this->data[idx] != A->data[idx]) {
-                printf("Match failed because of different values at: (%d, %d). Expected %d and Got %d\n", i, j, A->data[idx], this->data[idx]);
+                printf("Match failed because of different values at: (%d, %d). Expected %f and Got %f\n", i, j, A->data[idx], this->data[idx]);
                 return false;
             }
         }
@@ -92,7 +106,7 @@ void multiplicationThread(matrixThreadData *data) {
     }
 }
 
-void matrix::threadedMultiply(matrix *B, matrix *C, int numThreads) {
+void matrix::threadedMultiply(matrix *B, matrix *C, const int numThreads) {
     if (this->cols != B->rows) {
         printf("Inconsistent shapes for matrix multiplication. matrixA.cols should be eequal to matrixB.rows");
         return;

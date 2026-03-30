@@ -3,15 +3,16 @@
 
 #define TILE_WIDTH 32
 #define BLOCK_SIZE 32
+#define FULL_MASK 0xffffffff
 
 class matrix {
 public:
     int rows, cols;
-    int *data = nullptr;
+    float *data = nullptr;
 
     matrix(int, int);
     ~matrix();
-    void init();
+    void init(bool);
 
     void show();
 
@@ -19,13 +20,13 @@ public:
     
     bool matches(matrix*);
 
+    void clear();
+
     void threadedMultiply(matrix*, matrix*, int);
     
     void multiplySerial(matrix*, matrix*);
 
-    void cudaMultiplyV1(matrix*, matrix*);
-
-    void cudaMultiplyV2(matrix*, matrix*);
+    void cudaMultiply(matrix*, matrix*, int);
 };
 
 class matrixThreadData {

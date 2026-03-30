@@ -23,8 +23,8 @@ void getDeviceSpecs() {
         printf("Register Per Multiprocessor: %d\n", dev_prop.regsPerMultiprocessor);
         printf("Max Blocks Per Multiprocessor: %d\n", dev_prop.maxBlocksPerMultiProcessor);
         printf("Max Threads Per Multiprocessor: %d\n", dev_prop.maxThreadsPerMultiProcessor);
-        printf("Shared Memory Per Block: %d\n", dev_prop.sharedMemPerBlock);
-        printf("Shared Memory Per MultiProcessor: %d\n", dev_prop.sharedMemPerMultiprocessor);
+        printf("Shared Memory Per Block: %zu\n", dev_prop.sharedMemPerBlock);
+        printf("Shared Memory Per MultiProcessor: %zu\n", dev_prop.sharedMemPerMultiprocessor);
         printf("--------------------------------------\n");
     }
 }
