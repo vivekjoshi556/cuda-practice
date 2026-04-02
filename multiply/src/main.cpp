@@ -25,6 +25,7 @@ int main(int argc, char *argv[]) {
 
     // std::cout << "CUDA Specs:" << std::endl;
     // getDeviceSpecs();
+
     // Serial Execution
     auto serialStart = chrono::high_resolution_clock::now();
     A.multiplySerial(&B, &C);
@@ -53,7 +54,6 @@ int main(int argc, char *argv[]) {
     printf("-------------------------------------------------------\n");
     if(D.matches(&C)) {
         printf("Time for Cuda Multiplication v1 %.3f ms.\n", cudaTimer.count());
-        printf("SpeedUp over Serial: x%.2f\n", (serialTimer/cudaTimer));
         printf("SpeedUp over Threaded: x%.2f\n", (threadTimer/cudaTimer));
     }
     else
@@ -68,8 +68,6 @@ int main(int argc, char *argv[]) {
     printf("-------------------------------------------------------\n");
     if(D.matches(&C)) {
         printf("Time for Cuda Multiplication v2 %.3f ms.\n", cudaV2Timer.count());
-        printf("SpeedUp over Serial: x%.2f\n", (serialTimer/cudaV2Timer));
-        printf("SpeedUp over Threaded: x%.2f\n", (threadTimer/cudaV2Timer));
         printf("SpeedUp over Cuda v1: x%.2f\n", (cudaTimer/cudaV2Timer));
     }
     else
@@ -84,9 +82,7 @@ int main(int argc, char *argv[]) {
     printf("-------------------------------------------------------\n");
     if(D.matches(&C)) {
         printf("Time for Cuda Multiplication v3 %.3f ms.\n", cudaV3Timer.count());
-        printf("SpeedUp over Serial: x%.2f\n", (serialTimer/cudaV3Timer));
-        printf("SpeedUp over Threaded: x%.2f\n", (threadTimer/cudaV3Timer));
-        printf("SpeedUp over Cuda v2: x%.2f\n", (cudaTimer/cudaV3Timer));
+        printf("SpeedUp over Cuda v2: x%.2f\n", (cudaV2Timer/cudaV3Timer));
     }
     else
         printf("Cuda Execution v3 returned incorrect result.\n");
@@ -100,12 +96,25 @@ int main(int argc, char *argv[]) {
     printf("-------------------------------------------------------\n");
     if(D.matches(&C)) {
         printf("Time for Cuda Multiplication v4 %.3f ms.\n", cudaV4Timer.count());
-        printf("SpeedUp over Serial: x%.2f\n", (serialTimer/cudaV4Timer));
-        printf("SpeedUp over Threaded: x%.2f\n", (threadTimer/cudaV4Timer));
-        printf("SpeedUp over Cuda v2: x%.2f\n", (cudaTimer/cudaV4Timer));
+        printf("SpeedUp over Cuda v2: x%.2f\n", (cudaV2Timer/cudaV4Timer));
+        printf("SpeedUp over Cuda v3: x%.2f\n", (cudaV3Timer/cudaV4Timer));
     }
     else
         printf("Cuda Execution v4 returned incorrect result.\n");
+
+    // Cuda Execution v5
+    D.clear();
+    auto cudaV5Start = chrono::high_resolution_clock::now();
+    A.cudaMultiply(&B, &D, 5);
+    auto cudaV5Timer = chrono::duration<double, std::milli>(chrono::high_resolution_clock::now() - cudaV5Start);
+
+    printf("-------------------------------------------------------\n");
+    if(D.matches(&C)) {
+        printf("Time for Cuda Multiplication v5 %.3f ms.\n", cudaV5Timer.count());
+        printf("SpeedUp over Cuda v4: x%.2f\n", (cudaV4Timer/cudaV5Timer));
+    }
+    else
+        printf("Cuda Execution v5 returned incorrect result.\n");
 
 
     return 0;

@@ -44,36 +44,59 @@ void matrix::cudaMultiply(matrix *B, matrix *C, int kernel_idx) {
                 ceil(C->cols / (BN * 1.0)),
                 ceil(C->rows / (BM * 1.0))
             );
-            dim3 blockTilingDimBlock(
-                BM * BN / ITEMS_PER_THREAD
-            );
+            dim3 blockTilingDimBlock(BM * BN / ITEMS_PER_THREAD);
             multiplyV4<BM, BN, BK, ITEMS_PER_THREAD>
                 <<<blockTilingDimGrid, blockTilingDimBlock>>>(d_A, d_B, d_C, C->rows, C->cols, B->rows);
 
             break;
         }
         case 5: {
-            const int ITEMS_PER_THREAD_X = 8;
-            const int ITEMS_PER_THREAD_Y = 8;
-            const int BM = 64;
-            const int BN = 64;
             const int BK = 8;
+            // This is the block dim 1 thread will calculate.
+            const int TM = 8, TN = 8;
+            if (C->rows >= 128 && C->cols >= 128) {
+                // Tile Dims
+                const int BM = 128, BN = 128;
+                dim3 blockTilingDimGrid(
+                    ceil(C->cols / (BN * 1.0)),
+                    ceil(C->rows / (BM * 1.0))
+                );
+                dim3 blockTilingDimBlock((BM * BN) / (TM * TN));
+                multiplyV5<BM, BN, BK, TM, TN>
+                    <<<blockTilingDimGrid, blockTilingDimBlock>>>(d_A, d_B, d_C, C->rows, C->cols, B->rows);
+            }
+            else {
+                // Tile Dims 
+                const int BM = 64, BN = 64;
+                dim3 blockTilingDimGrid(
+                    ceil(C->cols / (BN * 1.0)),
+                    ceil(C->rows / (BM * 1.0))
+                );
+                dim3 blockTilingDimBlock((BM * BN) / (TM * TN));
+                multiplyV5<BM, BN, BK, TM, TN>
+                    <<<blockTilingDimGrid, blockTilingDimBlock>>>(d_A, d_B, d_C, C->rows, C->cols, B->rows);
+            }
 
-            dim3 blockTilingDimGrid(
-                ceil(C->cols / (BN * 1.0)),
-                ceil(C->rows / (BM * 1.0))
-            ); // 4096 / 64 => 64, 64
-            dim3 blockTilingDimBlock(
-                (BM * BN) / (ITEMS_PER_THREAD_X * ITEMS_PER_THREAD_Y)
-            ); // (64 x 64) / (8 x 8) => (64, 1)
-            multiplyV5<BM, BN, BK, ITEMS_PER_THREAD_X, ITEMS_PER_THREAD_Y>
-                <<<blockTilingDimGrid, blockTilingDimBlock>>>(d_A, d_B, d_C, C->rows, C->cols, B->rows);
 
             break;
         }
         default:
             printf("Invalid Kernel Number: %d", kernel_idx);
             break;
+    }
+
+    // Check if kernel was launched successfully (validates launch parameters:
+    // grid/block dims, shared memory size, argument passing). Non-blocking.
+    cudaError_t err = cudaGetLastError();
+    if (err != cudaSuccess) {
+        printf("Kernel launch failed: %s\n", cudaGetErrorString(err));
+    }
+
+    // Block CPU until GPU finishes, then check for runtime errors that occurred
+    // during kernel execution (illegal memory access, stack overflow, etc.)
+    err = cudaDeviceSynchronize();
+    if (err != cudaSuccess) {
+        printf("Kernel launch failed: %s\n", cudaGetErrorString(err));
     }
 
     cudaMemcpy(C->data, d_C, this->rows * this->cols * sizeof(float), cudaMemcpyDeviceToHost);
